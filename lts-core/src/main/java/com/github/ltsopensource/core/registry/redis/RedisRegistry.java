@@ -5,6 +5,7 @@ import com.github.ltsopensource.core.cluster.Config;
 import com.github.ltsopensource.core.cluster.Node;
 import com.github.ltsopensource.core.cluster.NodeType;
 import com.github.ltsopensource.core.commons.utils.CollectionUtils;
+import com.github.ltsopensource.core.commons.utils.StringUtils;
 import com.github.ltsopensource.core.constant.Constants;
 import com.github.ltsopensource.core.constant.ExtConfig;
 import com.github.ltsopensource.core.exception.NodeRegistryException;
@@ -32,16 +33,19 @@ public class RedisRegistry extends FailbackRegistry {
     private static final Logger LOGGER = LoggerFactory.getLogger(RedisRegistry.class);
 
     private final Map<String, JedisPool> jedisPools = new ConcurrentHashMap<String, JedisPool>();
-
-    private String clusterName;
     private final ScheduledExecutorService expireExecutor = Executors.newScheduledThreadPool(1,
             new NamedThreadFactory("LTSRedisRegistryExpireTimer", true));
     private final ScheduledFuture<?> expireFuture;
     private final int expirePeriod;
-    private boolean replicate;
     private final int reconnectPeriod;
     private final ConcurrentMap<String, Notifier> notifiers = new ConcurrentHashMap<String, Notifier>();
+    private String clusterName;
+    private boolean replicate;
     private RedisLock lock;
+    private ConcurrentHashMap<String/*key*/, List<String>> cachedNodeMap = new ConcurrentHashMap<String, List<String>>();
+    // 用这个线程来监控redis是否可用
+    private volatile String monitorId;
+    private volatile boolean redisAvailable = false;
 
     public RedisRegistry(AppContext appContext) {
         super(appContext);
@@ -52,6 +56,8 @@ public class RedisRegistry extends FailbackRegistry {
         JedisPoolConfig redisConfig = new JedisPoolConfig();
         // TODO 可以设置n多参数
         String address = NodeRegistryUtils.getRealRegistryAddress(config.getRegistryAddress());
+        // redis密码 update by jake.jin
+        String password = config.getParameter(ExtConfig.REGISTRY_REDIS_PASSWORD_KEY);
 
         String cluster = config.getParameter("cluster", "failover");
         if (!"failover".equals(cluster) && !"replicate".equals(cluster)) {
@@ -66,8 +72,13 @@ public class RedisRegistry extends FailbackRegistry {
             int i = addr.indexOf(':');
             String host = addr.substring(0, i);
             int port = Integer.parseInt(addr.substring(i + 1));
-            this.jedisPools.put(addr, new JedisPool(redisConfig, host, port,
-                    Constants.DEFAULT_TIMEOUT));
+
+            //jedisPools支持带密码的redis update by jake.jin
+            if (StringUtils.isEmpty(password)) {
+                this.jedisPools.put(addr, new JedisPool(redisConfig, host, port, Constants.DEFAULT_TIMEOUT));
+            } else {
+                this.jedisPools.put(addr, new JedisPool(redisConfig, host, port, Constants.DEFAULT_TIMEOUT, password));
+            }
         }
 
         this.expirePeriod = config.getParameter(ExtConfig.REDIS_SESSION_TIMEOUT, Constants.DEFAULT_SESSION_TIMEOUT);
@@ -287,8 +298,6 @@ public class RedisRegistry extends FailbackRegistry {
         }
     }
 
-    private ConcurrentHashMap<String/*key*/, List<String>> cachedNodeMap = new ConcurrentHashMap<String, List<String>>();
-
     private void doNotify(Jedis jedis, Collection<String> keys, Collection<NotifyListener> listeners) {
         if (CollectionUtils.isEmpty(keys)
                 && CollectionUtils.isEmpty(listeners)) {
@@ -364,10 +373,6 @@ public class RedisRegistry extends FailbackRegistry {
             }
         }
     }
-
-    // 用这个线程来监控redis是否可用
-    private volatile String monitorId;
-    private volatile boolean redisAvailable = false;
 
     private class Notifier extends Thread {
 

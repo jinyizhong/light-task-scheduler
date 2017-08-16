@@ -82,7 +82,7 @@
                                 </button>
                             </div>
                             <div class="col-sm-1">
-                                <button class="btn btn-warning" type="button" id="reSubscribeBtn" title="强制刷新:会从注册中心重新拉取节点信息">
+                                <button class="btn btn-warning" type="button" disabled="disabled" id="reSubscribeBtn" title="强制刷新:会从注册中心重新拉取节点信息">
                                     强制刷新
                                 </button>
                             </div>

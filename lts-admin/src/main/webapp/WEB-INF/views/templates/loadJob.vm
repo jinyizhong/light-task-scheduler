@@ -29,7 +29,7 @@
                                 </select>
                             </div>
                             <div class="col-sm-1" style="width:70px;">
-                                <button class="btn btn-primary" type="button" id="loadBtn">
+                                <button class="btn btn-primary" type="button" id="loadBtn" disabled="disabled">
                                     加载
                                 </button>
                             </div>

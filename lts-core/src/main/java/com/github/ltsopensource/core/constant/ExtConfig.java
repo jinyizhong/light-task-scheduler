@@ -215,5 +215,11 @@ public interface ExtConfig {
     String MAIL_SSL_ENABLED = "mail.sslEnabled";
     String JOB_RETRY_TIME_GENERATOR = "jobtracker.retry.time.generator";
 
-    String M_STAT_REPORTER_CLOSED  = "mStatReporterClosed";
+    String M_STAT_REPORTER_CLOSED = "mStatReporterClosed";
+
+    /**
+     * 注册中心redis密码
+     * update by jake.jin
+     */
+    String REGISTRY_REDIS_PASSWORD_KEY = "registry.redis.password";
 }

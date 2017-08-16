@@ -205,8 +205,8 @@ public class Job implements Serializable {
         if (StringUtils.isEmpty(taskId)) {
             throw new JobSubmitException("taskId can not be empty! job is " + toString());
         }
-        if (taskId.length() > 64) {
-            throw new JobSubmitException("taskId length should not great than 64! job is " + toString());
+        if (taskId.length() > 160) {
+            throw new JobSubmitException("taskId length should not great than 160! job is " + toString());
         }
         if (StringUtils.isEmpty(taskTrackerNodeGroup)) {
             throw new JobSubmitException("taskTrackerNodeGroup can not be empty! job is " + toString());

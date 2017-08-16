@@ -17,25 +17,24 @@ public class JettyContainer {
 
     public static void main(String[] args) {
         try {
-            String confPath = args[0];
-
-            confPath = confPath.trim();
+            String confPath = args[0].trim();
+            String warPath = args[1].trim();
 
             Properties conf = new Properties();
-            InputStream is = new FileInputStream(new File(confPath + "/conf/lts-admin.cfg"));
+            InputStream is = new FileInputStream(new File(confPath + "/lts-admin.cfg"));
             conf.load(is);
             String port = conf.getProperty("port");
             if (port == null || port.trim().equals("")) {
-                port = "8081";
+                port = "8089";
             }
 
             Server server = new Server(Integer.parseInt(port));
-            WebAppContext webapp = new WebAppContext();
-            webapp.setWar(confPath + "/war/lts-admin.war");
+            WebAppContext webApp = new WebAppContext();
+            webApp.setWar(warPath + "/lts-admin.war");
             Map<String, String> initParams = new HashMap<String, String>();
-            initParams.put("lts.admin.config.path", confPath + "/conf");
-            webapp.setInitParams(initParams);
-            server.setHandler(webapp);
+            initParams.put("lts.admin.config.path", confPath);
+            webApp.setInitParams(initParams);
+            server.setHandler(webApp);
             server.setStopAtShutdown(true);
             server.start();
 
